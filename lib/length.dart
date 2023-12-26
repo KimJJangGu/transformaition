@@ -13,7 +13,7 @@ class _LengthConverterState extends State<LengthConverter> {
   String result = "";
   String fromUnit = "mm";
   String toUnit = "mm";
-  List<String> transResult = [];
+  List<String> _transResult = [];
 
   final List<String> units = ["mm", "cm", "m", "km", "in", "ft", "yd", "mile"];
 
@@ -111,11 +111,20 @@ class _LengthConverterState extends State<LengthConverter> {
                   padding: EdgeInsets.all(8.0),
                 ),
                 Text(
-                  '결과: $result',
+                  '결과: $length$fromUnit = $result',
                   style: const TextStyle(fontSize: 16),
                 ),
                 const Padding(
                   padding: EdgeInsets.all(8.0),
+                ),
+                SizedBox(
+                  width: 200,
+                  height: 100,
+                  child: ListView(
+                    children: _transResult.map((result) {
+                      return Center(child: Text(result));
+                    }).toList(),
+                  ),
                 ),
                 Align(
                   alignment: Alignment.bottomRight,
@@ -161,12 +170,12 @@ class _LengthConverterState extends State<LengthConverter> {
       result = "";
       fromUnit = "mm";
       toUnit = "mm";
-      transResult.clear();
+      _transResult.clear();
     });
   }
 
   void recordResult(String result) {
-    transResult.insert(0, '변환 결과: $result');
+    _transResult.insert(0, '변환 결과: $result');
   }
 }
 
