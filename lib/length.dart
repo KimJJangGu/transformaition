@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class LengthConverter extends StatefulWidget {
   const LengthConverter({super.key});
@@ -10,10 +11,8 @@ class LengthConverter extends StatefulWidget {
 class _LengthConverterState extends State<LengthConverter> {
   TextEditingController lengthController = TextEditingController();
   double length = 0;
-  String result = "";
   String fromUnit = "mm";
-  String toUnit = "mm";
-  List<String> _transResult = [];
+  final List<String> _transResult = [];
 
   final List<String> units = ["mm", "cm", "m", "km", "in", "ft", "yd", "mile"];
 
@@ -21,6 +20,13 @@ class _LengthConverterState extends State<LengthConverter> {
   void dispose() {
     lengthController.dispose();
     super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    // 초기 화면에서 결과창을 전시
+    convertLength();
   }
 
   @override
@@ -42,6 +48,8 @@ class _LengthConverterState extends State<LengthConverter> {
                   onChanged: (value) {
                     setState(() {
                       length = double.tryParse(value) ?? 0;
+                      // 숫자를 입력 할 때 결과 값이 전시되게 하기
+                      convertLength();
                     });
                   },
                   decoration: const InputDecoration(
@@ -61,28 +69,7 @@ class _LengthConverterState extends State<LengthConverter> {
                         onChanged: (value) {
                           setState(() {
                             fromUnit = value!;
-                          });
-                        },
-                        items: units.map<DropdownMenuItem<String>>((String unit) {
-                          return DropdownMenuItem<String>(
-                            value: unit,
-                            child: Text(
-                              unit,
-                              style: const TextStyle(fontSize: 20),
-                            ),
-                          );
-                        }).toList(),
-                      ),
-                    ),
-                    const Padding(
-                      padding: EdgeInsets.all(8.0),
-                    ),
-                    Expanded(
-                      child: DropdownButton<String>(
-                        value: toUnit,
-                        onChanged: (value) {
-                          setState(() {
-                            toUnit = value!;
+                            convertLength();
                           });
                         },
                         items: units.map<DropdownMenuItem<String>>((String unit) {
@@ -101,28 +88,26 @@ class _LengthConverterState extends State<LengthConverter> {
                 const Padding(
                   padding: EdgeInsets.all(8.0),
                 ),
-                ElevatedButton(
-                  onPressed: () {
-                    convertLength();
-                  },
-                  child: const Text('변환', style: TextStyle(fontSize: 16)),
-                ),
-                const Padding(
-                  padding: EdgeInsets.all(8.0),
-                ),
-                Text(
-                  '결과: $length$fromUnit = $result',
-                  style: const TextStyle(fontSize: 16),
-                ),
-                const Padding(
-                  padding: EdgeInsets.all(8.0),
-                ),
                 SizedBox(
-                  width: 200,
-                  height: 100,
+                  width: double.infinity,
+                  height: 230,
                   child: ListView(
                     children: _transResult.map((result) {
-                      return Center(child: Text(result));
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          // 결과 값 오른쪽으로 이동
+                          Text(
+                            textAlign: TextAlign.end,
+                            overflow: TextOverflow.ellipsis,
+                            (result),
+                            style: const TextStyle(fontSize: 16),
+                            maxLines: 1,
+                          ),
+                          // 구분선 용도 밑 줄 추가, 밑줄 간격, 색상
+                          const Divider(height: 4, color: Colors.black12),
+                        ],
+                      );
                     }).toList(),
                   ),
                 ),
@@ -150,32 +135,33 @@ class _LengthConverterState extends State<LengthConverter> {
   }
 
   void convertLength() {
-    double resultValue = length;
-    // 미터로 변환
-    resultValue = convertToMeter(resultValue, fromUnit);
-    // 다른 단위로 변환
-    resultValue = convertFromMeter(resultValue, toUnit);
+    _transResult.clear();
+    // 숫자를 입력하지 않았을 때에는 단위만 표시
+    if (length == 0) {
+      _transResult.addAll(units.map((unit) => unit));
+    } else {
+      for (String toUnit in units) {
+        double resultValue = length;
+        resultValue = convertToMeter(resultValue, fromUnit);
+        resultValue = convertFromMeter(resultValue, toUnit);
+        _transResult.add('${formatNumber(resultValue)} $toUnit');
+      }
+    }
+  }
 
-    setState(() {
-      result = '$resultValue $toUnit';
-      recordResult(result);
-    });
+  String formatNumber(double resultNum) {
+    // 천 단위마다 쉼표 추가하기
+    return NumberFormat('###,###').format(resultNum);
   }
 
   void resetValues() {
-    // 초기화 버튼 누르면 입력, 출력한 값 초기화
     setState(() {
       lengthController.clear();
       length = 0;
-      result = "";
-      fromUnit = "mm";
-      toUnit = "mm";
       _transResult.clear();
     });
-  }
-
-  void recordResult(String result) {
-    _transResult.insert(0, '변환 결과: $result');
+    // 결과 창을 계속 남아있게 하기
+    convertLength();
   }
 }
 
